@@ -38,23 +38,9 @@ class DocsItaliaDockerSettings(CommunityBaseSettings):
     TEMPLATE_DEBUG = False
     TAGGIT_TAGS_FROM_STRING = 'readthedocs.docsitalia.utils.docsitalia_parse_tags'
 
-    DOCS_BASE = os.environ.get('DOCS_BASE', CommunityBaseSettings.SITE_ROOT)
-    MEDIA_ROOT = os.path.join(DOCS_BASE, 'media/')
-    STATIC_ROOT = os.path.join(DOCS_BASE, 'media/static/')
-    MEDIA_URL = os.environ['MEDIA_URL']
-    STATIC_URL = MEDIA_URL + 'static/'
-    ADMIN_MEDIA_PREFIX = MEDIA_URL + 'admin/'
     SECRET_KEY = os.environ['SECRET_KEY']
     DEFAULT_FROM_EMAIL = os.environ['DEFAULT_FROM_EMAIL']
     SESSION_COOKIE_DOMAIN = os.environ['RTD_DOMAIN']
-
-    DOCROOT = os.path.join(DOCS_BASE, 'user_builds')
-    UPLOAD_ROOT = os.path.join(DOCS_BASE, 'user_uploads')
-    CNAME_ROOT = os.path.join(DOCS_BASE, 'cnames')
-    LOGS_ROOT = os.path.join(DOCS_BASE, 'logs')
-    PRODUCTION_ROOT = os.path.join(DOCS_BASE, 'prod_artifacts')
-    PUBLIC_BASE = DOCS_BASE
-    PRIVATE_BASE = DOCS_BASE
 
     @property
     def TEMPLATES(self):  # noqa
@@ -169,7 +155,7 @@ class DocsItaliaDockerSettings(CommunityBaseSettings):
 
     # Override classes
     CLASS_OVERRIDES = {
-        'readthedocs.builds.syncers.Syncer': 'readthedocs.builds.syncers.LocalSyncer',
+        'readthedocs.builds.syncers.Syncer': 'readthedocs.builds.syncers.NullSyncer',
         'readthedocs.core.resolver.Resolver': 'readthedocs.docsitalia.resolver.ItaliaResolver',
         'readthedocs.oauth.services.GitHubService':
             'readthedocs.docsitalia.oauth.services.github.DocsItaliaGithubService',
@@ -295,6 +281,34 @@ class DocsItaliaDockerSettings(CommunityBaseSettings):
     DEBUG_TOOLBAR_CONFIG = {
         'SHOW_TOOLBAR_CALLBACK': show_toolbar,
     }
+
+    AZURE_ACCOUNT_NAME = 'devstoreaccount1'
+    AZURE_ACCOUNT_KEY = 'Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=='
+    AZURE_CONTAINER = 'static'
+    AZURE_STATIC_STORAGE_CONTAINER = AZURE_CONTAINER
+    AZURE_MEDIA_STORAGE_HOSTNAME = 'dev.docs.italia.it'
+
+    # We want to replace files for the same version built
+    AZURE_OVERWRITE_FILES = True
+
+    # Storage backend for build media artifacts (PDF, HTML, ePub, etc.)
+    RTD_BUILD_MEDIA_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    # AZURE_STATIC_STORAGE_HOSTNAME = 'community.dev.readthedocs.io'
+
+    # Storage for static files (those collected with `collectstatic`)
+    STATICFILES_STORAGE = 'readthedocs.docsitalia.storage.azure_storage.PublicAzureStorage'
+
+    STATICFILES_DIRS = [
+        os.path.join(CommunityBaseSettings.SITE_ROOT, 'readthedocs', 'static'),
+        os.path.join(CommunityBaseSettings.SITE_ROOT, 'media'),
+    ]
+    AZURE_BUILD_STORAGE_CONTAINER = 'build'
+    BUILD_COLD_STORAGE_URL = 'http://storage:10000/builds'
+    EXTERNAL_VERSION_URL = 'http://dev.docs.italia.it'
+    AZURE_EMULATED_MODE = True
+    AZURE_CUSTOM_DOMAIN = 'storage:10000'
+    AZURE_SSL = False
 
 DocsItaliaDockerSettings.load_settings(__name__)
 
