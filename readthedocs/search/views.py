@@ -91,7 +91,7 @@ def elastic_search(request, project_slug=None):
         request_type = request.GET.get('type', 'file')
 
     user_input = UserInput(
-        query=request.GET.get('q', '*'),
+        query=request.GET.get('q'),
         type=request_type or request.GET.get('type', 'project'),
         project=project_slug or request.GET.get('project'),
         version=request.GET.get('version'),
@@ -126,17 +126,18 @@ def elastic_search(request, project_slug=None):
     page_end = page_start + page_size
 
     sort_key = user_input.sort if user_input.sort in ALL_SORTS.keys() else DEFAULT_SORT_KEY
-    if user_input.query:
-        kwargs = {}
-        kwargs['sort'] = ALL_SORTS[sort_key]['value']
+    kwargs = {}
+    kwargs['sort'] = ALL_SORTS[sort_key]['value']
 
-        for avail_facet in ALL_FACETS:
-            value = getattr(user_input, avail_facet, None)
-            if value:
-                kwargs[avail_facet] = value
+    for avail_facet in ALL_FACETS:
+        value = getattr(user_input, avail_facet, None)
+        if value:
+            kwargs[avail_facet] = value
 
+    if user_input.query or kwargs.get('tags', None):
+        query = user_input.query or '*'
         search = search_facets[user_input.type](
-            query=user_input.query, user=request.user, **kwargs
+            query=query, user=request.user, **kwargs
         )
         results = search[page_start:page_end].execute()
         if not results:
