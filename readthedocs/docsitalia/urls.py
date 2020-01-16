@@ -39,7 +39,8 @@ docsitalia_urls = [
 urlpatterns = [
     url(r'^docsitalia/', include(docsitalia_urls)),
     url(r'^api/quicksearch/$', QuickSearchAPIView.as_view(), name='api_quicksearch'),
-    url(r'^api/relatedprojects/(?P<slug>{project_slug})/$'.format(**pattern_opts),
+    url(
+        r'^api/relatedprojects/(?P<slug>{project_slug})/$'.format(**pattern_opts),
         RelatedProjectsView.as_view(),
         name='api_relatedprojects'
     ),
