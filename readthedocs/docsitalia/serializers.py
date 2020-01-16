@@ -131,13 +131,13 @@ class RelatedProjectsSerializer(serializers.ModelSerializer):
         fields = ('same_publisher', 'same_publisher_project', 'similar_tags')
         model = Project
 
-    def __init__(self, instance=None, *args, **kwargs):
+    def __init__(self, *args, instance=None, **kwargs):
         super().__init__(instance=instance, *args, **kwargs)
         publisher_projects = []
         if instance:
             # take advantage of prefetching using `.all()`
             publisher_projects = instance.publisherproject_set.all()
-        self.publisher_project = publisher_projects and publisher_projects[0] or None
+        self.publisher_project = publisher_projects[0] if publisher_projects else None
 
     def get_same_publisher(self, obj):
         """Return projects having the same publisher as `obj`."""
@@ -155,7 +155,8 @@ class RelatedProjectsSerializer(serializers.ModelSerializer):
         ).exclude(pk=obj.pk).distinct()[:4]
         return RelatedProjectsSectionSerializer(queryset, many=True).data
 
-    def get_similar_tags(self, obj):
+    @staticmethod
+    def get_similar_tags(obj):
         """Return projects having similar tags to `obj`."""
         similar_projects = []
         for project in obj.tags.similar_objects():
