@@ -111,7 +111,7 @@ context = {
         ("{{ slug }}", "{{ url }}"),{% endfor %}
     ],
     'tags': [{% for tag in tags %}
-    (u"{{ tag }}", "/projects/tags/{{ tag|slugify }}/"),{% endfor %}
+    (u"{{ tag }}", "/search/?type=file&tags={{ tag|slugify }}"),{% endfor %}
     ],
     'slug': '{{ project.slug }}',
     'name': u'{{ project.name }}',

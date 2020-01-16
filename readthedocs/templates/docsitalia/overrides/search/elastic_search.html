@@ -3,7 +3,11 @@
 {% load core_tags docs_italia i18n static %}
 
 {% block title %}
-  {% blocktrans with query=query|default:"" %}Search: {{ query }}{% endblocktrans %}
+  {% if query != "*" %}
+    {% blocktrans with query=query|default:"" %}Ricerca: {{ query }}{% endblocktrans %}
+  {% else %}
+    {% blocktrans with query=query|default:"" %}Ricerca{% endblocktrans %}
+  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -116,7 +120,7 @@
 
       <!-- Right content -->
       <div class="col-12 col-md-8">
-        <h1 class="main-title py-2 neutral-1-color">Risultati per: {{ query }}</h1>
+        <h1 class="main-title py-2 neutral-1-color">Risultati {% if query != "*" %}per: {{ query }}{% endif %}</h1>
 
         <div class="serp-results-info mt-5 pb-2">
           <p class="mb-0">
