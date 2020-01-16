@@ -20,6 +20,7 @@ from ..github import get_metadata_for_document
 from ..metadata import InvalidMetadata
 from ..models import PublisherProject, Publisher, ProjectOrder, update_project_from_metadata
 from ..utils import get_projects_with_builds
+from ...search.views import elastic_search
 
 log = logging.getLogger(__name__)  # noqa
 
@@ -213,3 +214,15 @@ def server_error_401(request, template_name='401.html'):
     response = render(request, template_name)
     response.status_code = 401
     return response
+
+
+def search_by_tag(request, tag):
+    """Wrapper around readthedocs.search.views.elastic_search to search by tag."""
+    get_data = request.GET.copy()
+    if not get_data.get('q'):
+        get_data['q'] = '*'
+    if not get_data.get('type'):
+        get_data['type'] = 'file'
+    get_data.appendlist('tags', tag)
+    request.GET = get_data
+    return elastic_search(request)
