@@ -4,6 +4,7 @@ services:
     container_name: italia_docs_italia_it_test
     build:
       context: .
+      dockerfile: docsitalia_docker/docsitalia/Dockerfile
       target: docs_italia_it_test
     image: italia/docs_italia_it_test:latest
     depends_on:
@@ -40,7 +41,7 @@ services:
 
   es:
     build:
-      context: docker/elasticsearch
+      context: docsitalia_docker/elasticsearch
     environment:
       - cluster.name=docsitalia
       - discovery.type=single-node
