@@ -424,8 +424,8 @@ class DocsItaliaTest(TestCase):
             slug='myprojectslug',
             repo='https://github.com/testorg/myrepourl.git'
         )
-        project.tags.add('lorem', 'ipsum')
-        tags = project.tags.names()
+        project.tags.add('ipsum', 'lorem')
+        tags = sorted(project.tags.names())
         pub_project.projects.add(project)
         remote = RemoteRepository.objects.create(
             full_name='remote repo name',
