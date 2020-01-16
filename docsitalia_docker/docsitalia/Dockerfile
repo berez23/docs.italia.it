@@ -80,7 +80,7 @@ FROM docs_italia_it_build AS docs_italia_it_dev
 
 COPY requirements/ /app/requirements/
 RUN pip install --no-cache-dir -r /app/requirements/docsitalia.txt
-COPY docker/ /app/docker/
+COPY docsitalia_docker/ /app/docker/
 
 ENV DJANGO_SETTINGS_MODULE=readthedocs.docsitalia.settings.docker
 

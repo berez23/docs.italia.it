@@ -10,15 +10,16 @@ services:
       - 80:80
     volumes:
       - docs:/home/documents
-      - ./docker/nginx/conf.d/general-configuration.conf:/etc/nginx/conf.d/general-configuration.conf
-      - ./docker/nginx/snippets/:/etc/nginx/snippets/
-      - ./docker/nginx/404/:/home/documents/404/
-      - ./docker/nginx/sites-available/readthedocs-main.conf:/etc/nginx/conf.d/default.conf
+      - ./docsitalia_docker/nginx/conf.d/general-configuration.conf:/etc/nginx/conf.d/general-configuration.conf
+      - ./docsitalia_docker/nginx/snippets/:/etc/nginx/snippets/
+      - ./docsitalia_docker/nginx/404/:/home/documents/404/
+      - ./docsitalia_docker/nginx/sites-available/readthedocs-main.conf:/etc/nginx/conf.d/default.conf
 
   web:
     container_name: italia_docs_italia_it_web
     build:
-      context: .
+      context: ../..
+      dockerfile: docsitalia_docker/docsitalia/Dockerfile
       target: docs_italia_it_dev
     image: italia/docs_italia_it_dev:latest
     depends_on:
@@ -91,7 +92,7 @@ services:
 
   es:
     build:
-      context: docker/elasticsearch
+      context: ../elasticsearch
     environment:
       - cluster.name=docsitalia
       - discovery.type=single-node
@@ -109,7 +110,7 @@ services:
     image: redis
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
-      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./docsitalia_docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
 
   storage:
     image: mcr.microsoft.com/azure-storage/azurite:latest
