@@ -5,6 +5,7 @@ from rest_framework import serializers
 # from readthedocs.restapi.serializers import ProjectSerializer
 # todo merge
 from readthedocs.api.v2.serializers import ProjectSerializer
+from readthedocs.projects.models import Project
 
 
 class DocsItaliaProjectSerializer(ProjectSerializer):
@@ -87,3 +88,79 @@ class DocsItaliaProjectAdminSerializer(DocsItaliaProjectSerializer):
             'python_interpreter',
             'features',
         )
+
+
+class RelatedProjectsSectionSerializer(ProjectSerializer):
+
+    """DocsItalia custom serializer for a single Related Projects section."""
+
+    extra_data = serializers.SerializerMethodField()
+
+    class Meta(ProjectSerializer.Meta):
+        fields = ('name', 'slug', 'description', 'canonical_url', 'extra_data')
+
+    @staticmethod
+    def get_extra_data(obj):
+        """Return an object containing Publisher and PublisherProject detail."""
+        # take advantageof prefetching using `.all()`
+        publisher_projects = obj.publisherproject_set.all()
+        if publisher_projects:
+            publisher_project = publisher_projects[0]
+            publisher_data = publisher_project.publisher.metadata.get('publisher', {})
+            return {
+                'publisher_project': {
+                    'name': publisher_project.name,
+                    'canonical_url': publisher_project.get_canonical_url()
+                },
+                'publisher': {
+                    'name': publisher_data.get('name', obj.name),
+                    'canonical_url': publisher_project.publisher.get_canonical_url()
+                }
+            }
+
+
+class RelatedProjectsSerializer(serializers.ModelSerializer):
+
+    """DocsItalia custom serializer for Related Projects ("Documenti correlati")."""
+
+    same_publisher = serializers.SerializerMethodField()
+    same_publisher_project = serializers.SerializerMethodField()
+    similar_tags = serializers.SerializerMethodField()
+
+    class Meta(ProjectSerializer.Meta):
+        fields = ('same_publisher', 'same_publisher_project', 'similar_tags')
+        model = Project
+
+    def __init__(self, instance=None, *args, **kwargs):
+        super().__init__(instance=instance, *args, **kwargs)
+        publisher_projects = []
+        if instance:
+            # take advantage of prefetching using `.all()`
+            publisher_projects = instance.publisherproject_set.all()
+        self.publisher_project = publisher_projects and publisher_projects[0] or None
+
+    def get_same_publisher(self, obj):
+        """Return projects having the same publisher as `obj`."""
+        queryset = Project.objects.filter(
+            publisherproject__publisher=self.publisher_project.publisher,
+            versions__built=True
+        ).exclude(pk=obj.pk).distinct()[:4]
+        return RelatedProjectsSectionSerializer(queryset, many=True).data
+
+    def get_same_publisher_project(self, obj):
+        """Return projects having the same publisher project as `obj`."""
+        queryset = Project.objects.filter(
+            publisherproject=self.publisher_project,
+            versions__built=True
+        ).exclude(pk=obj.pk).distinct()[:4]
+        return RelatedProjectsSectionSerializer(queryset, many=True).data
+
+    def get_similar_tags(self, obj):
+        """Return projects having similar tags to `obj`."""
+        similar_projects = []
+        for project in obj.tags.similar_objects():
+            if project.versions.filter(built=True).exists():
+                similar_projects.append(project)
+            if len(similar_projects) == 4:
+                break
+        return RelatedProjectsSectionSerializer(similar_projects, many=True).data
