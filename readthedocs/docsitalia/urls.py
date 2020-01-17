@@ -9,8 +9,9 @@ from .search.views import QuickSearchAPIView
 from .views import integrations, api
 from .views.core_views import (
     PublisherList, DocsItaliaHomePage, PublisherIndex, PublisherProjectIndex, DocsItaliaImport,
-    DocumentRedirect
+    DocumentRedirect, search_by_tag
 )
+from .views.related_projects import RelatedProjectsView
 
 router = routers.DefaultRouter()
 router.register(r'document', api.DocsItaliaProjectViewSet, base_name='docsitalia-document')
@@ -38,6 +39,11 @@ docsitalia_urls = [
 urlpatterns = [
     url(r'^docsitalia/', include(docsitalia_urls)),
     url(r'^api/quicksearch/$', QuickSearchAPIView.as_view(), name='api_quicksearch'),
+    url(
+        r'^api/relatedprojects/(?P<slug>{project_slug})/$'.format(**pattern_opts),
+        RelatedProjectsView.as_view(),
+        name='api_relatedprojects'
+    ),
     url(
         r'^api/v2/allowedtag-autocomplete/$',
         api.AllowedTagAutocomplete.as_view(),
@@ -78,6 +84,7 @@ urlpatterns = [
         TemplateView.as_view(template_name='docsitalia/note-legali.html'),
         name='note_legali'
     ),
+    url(r'^ricerca/tag/(?P<tag>[-\w]+)/', search_by_tag, name='search_by_tag'),
     url(
         r'^(?P<slug>[-\w]+)/$',
         PublisherIndex.as_view(),
