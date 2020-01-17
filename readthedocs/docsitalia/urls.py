@@ -84,7 +84,7 @@ urlpatterns = [
         TemplateView.as_view(template_name='docsitalia/note-legali.html'),
         name='note_legali'
     ),
-    url(r'^ricerca/tag/(?P<tag>[-\w]+)/', search_by_tag, name='search_by_tag'),
+    url(r'^ricerca/tag/(?P<tag>[^/]+)/', search_by_tag, name='search_by_tag'),
     url(
         r'^(?P<slug>[-\w]+)/$',
         PublisherIndex.as_view(),
