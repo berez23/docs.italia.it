@@ -36,6 +36,7 @@ class DocsItaliaDockerSettings(CommunityBaseSettings):
     # General settings
     DEBUG = os.environ['DEBUG']
     TEMPLATE_DEBUG = False
+    TAGGIT_TAGS_FROM_STRING = 'taggit.utils._parse_tags'
 
     DOCS_BASE = os.environ.get('DOCS_BASE', CommunityBaseSettings.SITE_ROOT)
     MEDIA_ROOT = os.path.join(DOCS_BASE, 'media/')
