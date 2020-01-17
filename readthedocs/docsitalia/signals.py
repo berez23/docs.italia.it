@@ -73,7 +73,7 @@ def add_sphinx_context_data(sender, data, build_env, **kwargs):  # pylint: disab
         data['publisher'] = None
         data['publisher_logo'] = None
     if build_env.project.tagged_items.exists():
-        data['tags'] = [t.tag.name for t in build_env.project.tagged_items.all()]
+        data['tags'] = sorted([t.tag.name for t in build_env.project.tagged_items.all()])
 
 
 @receiver(pre_delete, sender=PublisherProject)

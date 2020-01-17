@@ -2,17 +2,15 @@ import json
 import time
 import mock
 import pytest
-from django.conf import settings
 from django.urls import reverse
 from django_dynamic_fixture import G
-from django_elasticsearch_dsl import Index
 
 from readthedocs.builds.models import Version
 from readthedocs.docsitalia.models import Publisher, PublisherProject
 from readthedocs.projects.models import HTMLFile, Project
 from readthedocs.search.documents import PageDocument, ProjectDocument
 from readthedocs.search.tasks import index_objects_to_es
-from readthedocs.search.tests.utils import get_search_query_from_project_file, DATA_TYPES_VALUES
+from readthedocs.search.tests.utils import get_search_query_from_project_file
 
 
 @pytest.mark.django_db
@@ -204,3 +202,56 @@ class TestDocsItaliaPageSearch(object):
             assert previous_priority >= result.priority
             assert result.priority == project_by_slug.projectorder.priority
             previous_priority = result.priority
+
+    def test_search_by_tag(self, client, all_projects):
+        by_slug = {}
+        for index, project in enumerate(all_projects):
+            by_slug[project.slug] = project
+            project.projectorder.priority = 100 - index
+            project.projectorder.save()
+
+        custom_tag = 'search_by_tag'
+        other_tag = 'other_tag'
+        project = all_projects[0]
+        project.tags.add(custom_tag)
+        new_version = G(Version, project=project)
+        project.default_version = new_version.slug
+        project.save()
+
+        other_project = all_projects[1]
+        other_project.tags.add(other_tag)
+        new_version = G(Version, project=other_project)
+        other_project.default_version = new_version.slug
+        other_project.save()
+
+        # test normal search works with tags
+        default_search_results, _ = self._get_search_result(
+            url=self.url,
+            client=client,
+            search_params={'q': '*', 'type': 'file', 'tags': custom_tag}
+        )
+        assert len(default_search_results) == 2
+        for result in default_search_results:
+            assert result.project == project.slug
+
+        # custom search yields the same results as the normal search
+        search_by_tag_url = reverse('search_by_tag', kwargs={'tag': custom_tag})
+        search_by_tag_results, _ = self._get_search_result(
+            url=search_by_tag_url,
+            client=client,
+            search_params={}
+        )
+        assert len(search_by_tag_results) == 2
+        for result in search_by_tag_results:
+            assert result.project == project.slug
+
+        # tags passed via GET are merged with the base one
+        search_by_tag_url = reverse('search_by_tag', kwargs={'tag': custom_tag})
+        search_by_other_tag_results, _ = self._get_search_result(
+            url=search_by_tag_url,
+            client=client,
+            search_params={'tags': other_tag}
+        )
+        assert len(search_by_other_tag_results) == 4
+        for result in search_by_other_tag_results:
+            assert result.project == other_project.slug or result.project == project.slug

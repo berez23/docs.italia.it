@@ -9,7 +9,7 @@ from .search.views import QuickSearchAPIView
 from .views import integrations, api
 from .views.core_views import (
     PublisherList, DocsItaliaHomePage, PublisherIndex, PublisherProjectIndex, DocsItaliaImport,
-    DocumentRedirect
+    DocumentRedirect, search_by_tag
 )
 
 router = routers.DefaultRouter()
@@ -78,6 +78,7 @@ urlpatterns = [
         TemplateView.as_view(template_name='docsitalia/note-legali.html'),
         name='note_legali'
     ),
+    url(r'^ricerca/tag/(?P<tag>[-\w]+)/', search_by_tag, name='search_by_tag'),
     url(
         r'^(?P<slug>[-\w]+)/$',
         PublisherIndex.as_view(),
