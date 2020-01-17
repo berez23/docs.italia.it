@@ -2,6 +2,7 @@
 """Docs italia serializers."""
 
 from rest_framework import serializers
+from rest_framework.fields import empty
 # from readthedocs.restapi.serializers import ProjectSerializer
 # todo merge
 from readthedocs.api.v2.serializers import ProjectSerializer
@@ -132,8 +133,8 @@ class RelatedProjectsSerializer(serializers.ModelSerializer):
         fields = ('same_publisher', 'same_publisher_project', 'similar_tags')
         model = Project
 
-    def __init__(self, *args, instance=None, **kwargs):
-        super().__init__(instance=instance, *args, **kwargs)
+    def __init__(self, instance=None, data=empty, **kwargs):
+        super().__init__(instance=instance, data=data, **kwargs)
         self.publisher_project = instance.publisherproject_set.first()
 
     def get_same_publisher(self, obj):
