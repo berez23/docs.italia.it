@@ -102,10 +102,11 @@ class RelatedProjectsSectionSerializer(ProjectSerializer):
     @staticmethod
     def get_extra_data(obj):
         """Return an object containing Publisher and PublisherProject detail."""
-        # take advantageof prefetching using `.all()`
-        publisher_projects = obj.publisherproject_set.all()
-        if publisher_projects:
-            publisher_project = publisher_projects[0]
+        try:
+            publisher_project = obj.publisherproject_set.all()[0]
+        except IndexError:
+            return {}
+        else:
             publisher_data = publisher_project.publisher.metadata.get('publisher', {})
             return {
                 'publisher_project': {
@@ -133,11 +134,7 @@ class RelatedProjectsSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, instance=None, **kwargs):
         super().__init__(instance=instance, *args, **kwargs)
-        publisher_projects = []
-        if instance:
-            # take advantage of prefetching using `.all()`
-            publisher_projects = instance.publisherproject_set.all()
-        self.publisher_project = publisher_projects[0] if publisher_projects else None
+        self.publisher_project = instance.publisherproject_set.first()
 
     def get_same_publisher(self, obj):
         """Return projects having the same publisher as `obj`."""

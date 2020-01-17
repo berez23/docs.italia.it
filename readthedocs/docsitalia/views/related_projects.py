@@ -18,6 +18,6 @@ class RelatedProjectsView(RetrieveAPIView):
     permission_classes = (APIPermission,)
     queryset = Project.objects.filter(
         documentation_type__contains='sphinx'
-    ).prefetch_related("publisherproject_set__publisher", "tags")
+    )
     renderer_classes = (JSONRenderer,)
     serializer_class = RelatedProjectsSerializer
