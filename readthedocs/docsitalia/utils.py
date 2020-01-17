@@ -10,7 +10,6 @@ import yaml
 from requests.exceptions import ConnectionError
 
 from django.conf import settings
-from taggit.utils import _parse_tags
 
 from readthedocs.builds.constants import LATEST, STABLE
 from readthedocs.builds.models import Build
@@ -126,4 +125,3 @@ def docsitalia_parse_tags(tag_string):
         return sorted(tag_string.split(','))
 
     return []
-
