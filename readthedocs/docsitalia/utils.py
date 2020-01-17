@@ -109,3 +109,19 @@ def get_real_version_slug(lang_slug, version_slug):
         # this means custom versions are not set and we fallback to unchanged behavior
         pass
     return version_slug
+
+
+def docsitalia_parse_tags(tag_string):
+    """
+    Parses a string into its tags by preserving spaces and other characters.
+
+    We just split on commas
+
+    :see: https://django-taggit.readthedocs.io/page/custom_tagging.html
+    :param tag_string: a delimited string of tags
+    :return: a sorted list of tag strings
+    """
+    if tag_string:
+        return sorted(tag_string.split(','))
+
+    return []
