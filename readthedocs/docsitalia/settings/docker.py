@@ -57,6 +57,7 @@ class DocsItaliaDockerSettings(CommunityBaseSettings):
         apps.append('readthedocs.docsitalia')
         apps.append('dal',)
         apps.append('dal_select2',)
+        apps.append('storages',)
         if os.environ.get('DOCS_CONVERTER_VERSION', False):
             apps.insert(apps.index('rest_framework'), 'docs_italia_convertitore_web')
 
@@ -271,6 +272,13 @@ class DocsItaliaDockerSettings(CommunityBaseSettings):
                 'level': 'INFO',
             }
         }
+        logging['loggers'].update({
+            # Disable azurite logging
+            'azure.storage.common.storageclient': {
+                'handlers': ['null'],
+                'propagate': False,
+            },
+        })
         return logging
 
     INTERNAL_IPS = ["127.0.0.1", "localhost", "local.docs.italia.it"]
@@ -286,18 +294,21 @@ class DocsItaliaDockerSettings(CommunityBaseSettings):
     AZURE_ACCOUNT_KEY = 'Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=='
     AZURE_CONTAINER = 'static'
     AZURE_STATIC_STORAGE_CONTAINER = AZURE_CONTAINER
-    AZURE_MEDIA_STORAGE_HOSTNAME = 'dev.docs.italia.it'
+
+    AZURE_MEDIA_STORAGE_HOSTNAME = 'local.docs.italia.it'
+    AZURE_MEDIA_STORAGE_URL = f'/{AZURE_ACCOUNT_NAME}/media/'
 
     # We want to replace files for the same version built
     AZURE_OVERWRITE_FILES = True
 
     # Storage backend for build media artifacts (PDF, HTML, ePub, etc.)
-    RTD_BUILD_MEDIA_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    RTD_BUILD_MEDIA_STORAGE = 'readthedocs.storage.azure_storage.AzureBuildMediaStorage'
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
-    # AZURE_STATIC_STORAGE_HOSTNAME = 'community.dev.readthedocs.io'
+    AZURE_STATIC_STORAGE_HOSTNAME = 'local.docs.italia.it'
 
     # Storage for static files (those collected with `collectstatic`)
-    STATICFILES_STORAGE = 'readthedocs.docsitalia.storage.azure_storage.PublicAzureStorage'
+    # STATICFILES_STORAGE = 'readthedocs.docsitalia.storage.azure_storage.PublicAzureStorage'
+    STATICFILES_STORAGE = 'readthedocs.storage.azure_storage.AzureStaticStorage'
 
     STATICFILES_DIRS = [
         os.path.join(CommunityBaseSettings.SITE_ROOT, 'readthedocs', 'static'),
@@ -305,10 +316,11 @@ class DocsItaliaDockerSettings(CommunityBaseSettings):
     ]
     AZURE_BUILD_STORAGE_CONTAINER = 'build'
     BUILD_COLD_STORAGE_URL = 'http://storage:10000/builds'
-    EXTERNAL_VERSION_URL = 'http://dev.docs.italia.it'
+    EXTERNAL_VERSION_URL = 'http://local.docs.italia.it'
     AZURE_EMULATED_MODE = True
     AZURE_CUSTOM_DOMAIN = 'storage:10000'
     AZURE_SSL = False
+    STATIC_URL = 'http://local.docs.italia.it/devstoreaccount1/static/'
 
 DocsItaliaDockerSettings.load_settings(__name__)
 

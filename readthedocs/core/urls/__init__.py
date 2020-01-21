@@ -7,6 +7,8 @@ from readthedocs.constants import pattern_opts
 from readthedocs.core import views
 from readthedocs.core.views import serve
 from readthedocs.projects.feeds import LatestProjectsFeed, NewProjectsFeed
+from readthedocs.docsitalia.views import temp_serve_views
+
 
 docs_urls = [
     url(
@@ -35,7 +37,7 @@ docs_urls = [
             r'(?P<version_slug>{version_slug})/'
             r'(?P<filename>{filename_slug})'.format(**pattern_opts)
         ),
-        serve.serve_docs,
+        temp_serve_views.serve_docs,
         name='docs_detail',
     ),
 ]
