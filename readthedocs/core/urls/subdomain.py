@@ -12,9 +12,9 @@ from readthedocs.core.views.serve import (
     redirect_page_with_filename,
     redirect_project_slug,
     robots_txt,
-    serve_docs,
     sitemap_xml,
 )
+from readthedocs.docsitalia.views.temp_serve_views import serve_docs
 
 
 handler500 = server_error_500

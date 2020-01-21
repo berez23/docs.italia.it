@@ -10,6 +10,7 @@ from django.conf.urls.static import static
 
 from readthedocs.constants import pattern_opts
 from readthedocs.core.views import serve
+from readthedocs.docsitalia.views import temp_serve_views
 
 
 handler500 = 'readthedocs.core.views.server_error_500'
@@ -27,7 +28,7 @@ single_version_urls = [
             r'^(?:|projects/(?P<subproject_slug>{project_slug})/)'
             r'(?P<filename>{filename_slug})$'.format(**pattern_opts)
         ),
-        serve.serve_docs,
+        temp_serve_views.serve_docs,
         name='docs_detail',
     ),
 ]
