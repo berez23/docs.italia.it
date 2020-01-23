@@ -44,9 +44,7 @@ class PageQuickSearchDocument(RTDDocTypeMixin, DocType):
         Do not index files that belong to non sphinx project.
         Also do not index certain files.
         """
-        return super().get_queryset().internal().select_related(
-            'version',
-        ).filter(
+        return super().get_queryset().internal().filter(
             project__documentation_type__contains='sphinx',
         ).exclude(version__privacy_level=PRIVATE)
 
