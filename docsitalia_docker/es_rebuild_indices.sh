@@ -2,7 +2,9 @@
 
 set -e
 
+DOCKER_FILE=docsitalia_docker/compose/docker-compose-docsitalia.yml
+
 echo "\n========\nRecreating ES indices and reindexing the content\n========\n"
-docker-compose up -d web celery-web
+docker-compose -f "${DOCKER_FILE}" up -d web celery-web
 sleep 5
-docker-compose exec -T web python manage.py search_index --rebuild
+docker-compose -f "${DOCKER_FILE}" exec -T web python manage.py search_index --rebuild

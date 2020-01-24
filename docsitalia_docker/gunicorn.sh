@@ -2,7 +2,7 @@
 
 set -e
 
-docker/dirs.sh
+docsitalia_docker/dirs.sh
 if [ "$1" = "collect" ]; then
   cp -a media /home/documents/
   python manage.py collectstatic --no-input
