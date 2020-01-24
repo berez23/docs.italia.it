@@ -3,7 +3,7 @@ services:
   py36:
     container_name: italia_docs_italia_it_test
     build:
-      context: .
+      context: ../..
       dockerfile: docsitalia_docker/docsitalia/Dockerfile
       target: docs_italia_it_test
     image: italia/docs_italia_it_test:latest
@@ -14,13 +14,14 @@ services:
     env_file:
       - .dockerenv
     volumes:
-      - ".:/app:rw"
+      - ../..:/app:rw
       - tox:/app/.tox
 
   itresolver:
     container_name: italia_docs_italia_it_itresolver
     build:
-      context: .
+      context: ../..
+      dockerfile: docsitalia_docker/docsitalia/Dockerfile
       target: docs_italia_it_test
     image: italia/docs_italia_it_test:latest
     depends_on:
@@ -29,7 +30,7 @@ services:
     env_file:
       - .dockerenv
     volumes:
-      - ".:/app:rw"
+      - ../..:/app:rw
       - tox:/app/.tox
 
   db:
@@ -41,7 +42,7 @@ services:
 
   es:
     build:
-      context: docsitalia_docker/elasticsearch
+      context: ../elasticsearch
     environment:
       - cluster.name=docsitalia
       - discovery.type=single-node

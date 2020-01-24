@@ -21,7 +21,8 @@ from rest_framework.response import Response
 from readthedocs.builds.constants import LATEST, STABLE
 from readthedocs.builds.models import Version
 from readthedocs.core.signals import webhook_github
-from readthedocs.core.views.serve import serve_docs
+from readthedocs.docsitalia.views.temp_serve_views import serve_docs
+
 from readthedocs.docsitalia.resolver import ItaliaResolver
 from readthedocs.oauth.models import RemoteOrganization, RemoteRepository
 from readthedocs.projects.models import Project

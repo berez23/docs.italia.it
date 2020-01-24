@@ -1,9 +1,11 @@
 import logging
 import mimetypes
+from urllib.parse import urlparse, urlunparse
 import os
+from functools import wraps
 
 from django.conf import settings
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import get_object_or_404, render
 from django.utils.encoding import iri_to_uri
 
@@ -11,11 +13,60 @@ from readthedocs.builds.models import Version
 from readthedocs.core.permissions import AdminPermission
 from readthedocs.docsitalia.utils import get_real_version_slug
 from readthedocs.projects import constants
+from readthedocs.projects.models import ProjectRelationship
 
-from readthedocs.core.views.serve import map_project_slug, map_subproject_slug, redirect_project_slug, _serve_401
+from readthedocs.core.views.serve import map_project_slug, redirect_project_slug, _serve_401
 
 
 log = logging.getLogger(__name__)
+
+
+"""
+Temporary mix of old `serve_docs` view and Proxito view from upstream to make azure storage work. 
+Should be deleted after merge with new version of upstream.
+"""
+
+
+def map_subproject_slug(view_func):
+    """
+    A decorator that maps a ``subproject_slug`` URL param into a Project.
+
+    :raises: Http404 if the Project doesn't exist
+
+    .. warning:: Does not take into account any kind of privacy settings.
+    """
+
+    @wraps(view_func)
+    def inner_view(  # noqa
+            request, subproject=None, subproject_slug=None, *args, **kwargs
+    ):
+        if subproject is None and subproject_slug:
+            # Try to fetch by subproject alias first, otherwise we might end up
+            # redirected to an unrelated project.
+            # Depends on a project passed into kwargs
+            rel = ProjectRelationship.objects.filter(
+                parent=kwargs['project'],
+                alias=subproject_slug,
+            ).first()
+            if rel:
+                subproject = rel.child
+            else:
+                rel = ProjectRelationship.objects.filter(
+                    parent=kwargs['project'],
+                    child__slug=subproject_slug,
+                ).first()
+                if rel:
+                    subproject = rel.child
+                else:
+                    log.warning(
+                        'The slug is not subproject of project. subproject_slug=%s project_slug=%s',
+                        subproject_slug, kwargs['project'].slug
+                    )
+                    raise Http404('Invalid subproject slug')
+
+        return view_func(request, subproject=subproject, *args, **kwargs)
+
+    return inner_view
 
 
 @map_project_slug
@@ -66,12 +117,53 @@ def _get_project_data_from_request(
     return final_project, lang_slug, version_slug, filename
 
 
-@map_project_slug
-@map_subproject_slug
+def get_redirect(project, lang_slug, version_slug, filename, full_path):
+    """
+    Check for a redirect for this project that matches ``full_path``.
+
+    :returns: the path to redirect the request and its status code
+    :rtype: tuple
+    """
+    redirect_path, http_status = project.redirects.get_redirect_path_with_status(
+        language=lang_slug,
+        version_slug=version_slug,
+        path=filename,
+        # full_path=full_path, # do not work right now
+    )
+    return redirect_path, http_status
+
+
+def get_redirect_response(request, redirect_path, http_status):
+    """
+    Build the response for the ``redirect_path`` and its ``http_status``.
+
+    :returns: redirect respose with the correct path
+    :rtype: HttpResponseRedirect or HttpResponsePermanentRedirect
+    """
+    schema, netloc, path, params, query, fragments = urlparse(request.path)
+    new_path = urlunparse((schema, netloc, redirect_path, params, query, fragments))
+    # Re-use the domain and protocol used in the current request.
+    # Redirects shouldn't change the domain, version or language.
+    # However, if the new_path is already an absolute URI, just use it
+    new_path = request.build_absolute_uri(new_path)
+
+    log.info(
+        'Redirecting: from=%s to=%s http_status=%s',
+        request.build_absolute_uri(),
+        new_path,
+        http_status,
+    )
+
+    if http_status and http_status == 301:
+        return HttpResponsePermanentRedirect(new_path)
+
+    return HttpResponseRedirect(new_path)
+
+
 def serve_docs(
         request,
-        project,
-        subproject,
+        project_slug=None,
+        subproject_slug=None,
         lang_slug=None,
         version_slug=None,
         filename='',
@@ -79,8 +171,8 @@ def serve_docs(
     """Map existing proj, lang, version, filename views to the file format."""
     final_project, lang_slug, version_slug, filename = _get_project_data_from_request(  # noqa
         request,
-        project_slug=project,
-        subproject_slug=subproject,
+        project_slug=project_slug,
+        subproject_slug=subproject_slug,
         lang_slug=lang_slug,
         version_slug=version_slug,
         filename=filename,
@@ -88,7 +180,7 @@ def serve_docs(
 
     log.debug(
         'Serving docs: project=%s, subproject=%s, lang_slug=%s, version_slug=%s, filename=%s',
-        final_project.slug, subproject, lang_slug, version_slug, filename
+        final_project.slug, subproject_slug, lang_slug, version_slug, filename
     )
     # Handle a / redirect when we aren't a single version
     if all([lang_slug is None, version_slug is None, filename == '',
@@ -111,38 +203,32 @@ def serve_docs(
         )
         raise Http404('Invalid URL for project with versions')
 
-    # TODO: un-comment when ready to perform redirect here
-    # redirect_path, http_status = self.get_redirect(
-    #     final_project,
-    #     lang_slug,
-    #     version_slug,
-    #     filename,
-    #     request.path,
-    # )
-    # if redirect_path and http_status:
-    #     return self.get_redirect_response(request, redirect_path, http_status)
-
-    # Check user permissions and return an unauthed response if needed
-    # TODO - now it is a fake method returning True
-    # if not self.allowed_user(request, final_project, version_slug):
-    #     return self.get_unauthed_response(request, final_project)
+    redirect_path, http_status = get_redirect(
+        final_project,
+        lang_slug,
+        version_slug,
+        filename,
+        request.path,
+    )
+    if redirect_path and http_status:
+        return get_redirect_response(request, redirect_path, http_status)
 
     try:
         version = (
             Version.objects
-            .public(user=request.user, project=project)
+            .public(user=request.user, project=final_project)
             .get(slug=version_slug)
         )
     except Version.DoesNotExist:
         # Properly raise a 404 if the version doesn't exist (or is inactive) and
         # a 401 if it does
-        if project.versions.filter(slug=version_slug, active=True).exists():
-            return _serve_401(request, project)
+        if final_project.versions.filter(slug=version_slug, active=True).exists():
+            return _serve_401(request, final_project)
         raise Http404('Version does not exist.')
 
     if (version.privacy_level == constants.PRIVATE and
-            not AdminPermission.is_member(user=request.user, obj=project)):
-        return _serve_401(request, project)
+            not AdminPermission.is_member(user=request.user, obj=final_project)):
+        return _serve_401(request, final_project)
 
     storage_path = final_project.get_storage_path(
         type_='html', version_slug=version_slug, include_file=False
@@ -154,14 +240,12 @@ def serve_docs(
     if path[-1] == '/':
         path += 'index.html'
 
-    # raise Exception(path)
-
     log.info('[Nginx serve] path=%s, project=%s', path, final_project.slug)
 
     if not path.startswith(settings.AZURE_MEDIA_STORAGE_URL):
         if path[0] == '/':
             path = path[1:]
-        path = f'{settings.settings.AZURE_MEDIA_STORAGE_URL}{path}'
+        path = f'{settings.AZURE_MEDIA_STORAGE_URL}{path}'
 
     content_type, encoding = mimetypes.guess_type(path)
     content_type = content_type or 'application/octet-stream'

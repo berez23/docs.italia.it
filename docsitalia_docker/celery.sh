@@ -2,5 +2,5 @@
 
 set -e
 
-docker/dirs.sh
+docsitalia_docker/dirs.sh
 celery worker $*

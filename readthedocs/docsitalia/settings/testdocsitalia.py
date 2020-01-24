@@ -51,6 +51,8 @@ class DocsItaliaTestSettings(CommunityTestSettings):
             }
         }
 
+    AZURE_MEDIA_STORAGE_URL = '/media/'
+
     @property
     def INSTALLED_APPS(self):  # noqa
         apps = super().INSTALLED_APPS

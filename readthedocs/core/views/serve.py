@@ -216,7 +216,11 @@ def serve_docs(
         version_slug=None,
         filename='',
 ):
-    """Map existing proj, lang, version, filename views to the file format."""
+    """
+    Not used for now. readthedocs.docsitalia.views.temp_serve_views.py used instead.
+
+    Map existing proj, lang, version, filename views to the file format.
+    """
     if not version_slug:
         version_slug = project.get_default_version()
     else:
