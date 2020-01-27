@@ -6,6 +6,7 @@ import logging
 from django.db.models import Case, When
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView, ListView, View
 
@@ -219,6 +220,9 @@ def server_error_401(request, template_name='401.html'):
 def search_by_tag(request, tag):
     """Wrapper around readthedocs.search.views.elastic_search to search by tag."""
     get_data = request.GET.copy()
+    if get_data.get('tags') or get_data.get('q') or get_data.get('type'):
+        real_search = '%s?%s' % (reverse('search'), request.GET.urlencode())
+        return HttpResponseRedirect(real_search)
     if not get_data.get('q'):
         get_data['q'] = '*'
     if not get_data.get('type'):

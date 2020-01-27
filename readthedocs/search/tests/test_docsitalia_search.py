@@ -247,11 +247,7 @@ class TestDocsItaliaPageSearch(object):
 
         # tags passed via GET are merged with the base one
         search_by_tag_url = reverse('search_by_tag', kwargs={'tag': custom_tag})
-        search_by_other_tag_results, _ = self._get_search_result(
-            url=search_by_tag_url,
-            client=client,
-            search_params={'tags': other_tag}
-        )
-        assert len(search_by_other_tag_results) == 4
-        for result in search_by_other_tag_results:
-            assert result.project == other_project.slug or result.project == project.slug
+        new_url = '%s?%s' % (reverse('search'), 'tags=other_tag')
+        resp = client.get(search_by_tag_url, {'tags': other_tag})
+        assert resp.status_code == 302
+        assert resp['Location'] == new_url
