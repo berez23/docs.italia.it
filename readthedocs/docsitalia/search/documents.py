@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db.models import F
 from django_elasticsearch_dsl import DocType, Index, fields
 from elasticsearch_dsl import analyzer, tokenizer
 
@@ -46,6 +47,7 @@ class PageQuickSearchDocument(RTDDocTypeMixin, DocType):
         """
         return super().get_queryset().internal().filter(
             project__documentation_type__contains='sphinx',
+            version__slug=F("project__default_version"),
         ).exclude(version__privacy_level=PRIVATE)
 
     def prepare_model(self, obj):
