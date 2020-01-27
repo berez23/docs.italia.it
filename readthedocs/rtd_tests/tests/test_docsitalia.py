@@ -1319,6 +1319,25 @@ class DocsItaliaTest(TestCase):
         data = validate_document_metadata(None, document_metadata)
         self.assertEqual(['tag', 'tag with spaces'], sorted(data['document']['tags']))
 
+    def test_remove_unallowed_tags(self):
+        AllowedTag.objects.bulk_create(
+            [
+                AllowedTag(name='tag', enabled=True),
+                AllowedTag(name='disabled_tag', enabled=False),
+                AllowedTag(name='tag with spaces', enabled=True),
+            ]
+        )
+
+        project = Project.objects.create(
+            name='my project',
+            slug='myprojectslug',
+            repo='https://github.com/testorg/myrepourl.git'
+        )
+        project.tags.set('tag', 'disabled_tag', 'random tag', 'tag with spaces')
+        AllowedTag.remove_unallowed()
+        project.refresh_from_db()
+        assert list(project.tags.names()) == ['tag', 'tag with spaces']
+
 
 class AllowedTagAutocompleteTests(TestCase):
     def test_allowed_tags_listing(self):
