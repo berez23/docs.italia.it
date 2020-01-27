@@ -129,6 +129,10 @@ class Command(BaseCommand):
         `--model <app_label>.<model_name>` parameter.
         Otherwise, it will reindex all the models
         """
+        wiki_url = 'https://github.com/italia/docs.italia.it/wiki/Comandi-utili#use-di-reindex_elasticsearch'
+        raise RuntimeError(
+            'Don\'t use this command.\nRun "python manage.py search_index --rebuild" instead.\nSee %s' % wiki_url
+        )
         models = None
         if options['models']:
             models = [apps.get_model(model_name) for model_name in options['models']]
