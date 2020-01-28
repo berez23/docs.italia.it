@@ -7,6 +7,7 @@ class OverrideHostnameMixin:
 
     """
     Override the hostname when outputting URLs.
+
     This is useful for use with a CDN or when proxying outside of Blob Storage
     See: https://github.com/jschneier/django-storages/pull/658
     """

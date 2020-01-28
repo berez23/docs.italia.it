@@ -1,3 +1,9 @@
+"""
+Temporary mix of old `serve_docs` view and Proxito view from upstream to make azure storage work.
+
+Should be deleted after merge with new version of upstream.
+"""
+
 import logging
 import mimetypes
 from urllib.parse import urlparse, urlunparse
@@ -6,7 +12,7 @@ from functools import wraps
 
 from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django.utils.encoding import iri_to_uri
 
 from readthedocs.builds.models import Version
@@ -19,12 +25,6 @@ from readthedocs.core.views.serve import map_project_slug, redirect_project_slug
 
 
 log = logging.getLogger(__name__)
-
-
-"""
-Temporary mix of old `serve_docs` view and Proxito view from upstream to make azure storage work. 
-Should be deleted after merge with new version of upstream.
-"""
 
 
 def map_subproject_slug(view_func):
@@ -118,6 +118,7 @@ def _get_project_data_from_request(
 
 
 def get_redirect(project, lang_slug, version_slug, filename, full_path):
+    # pylint: disable=unused-argument
     """
     Check for a redirect for this project that matches ``full_path``.
 
@@ -140,7 +141,7 @@ def get_redirect_response(request, redirect_path, http_status):
     :returns: redirect respose with the correct path
     :rtype: HttpResponseRedirect or HttpResponsePermanentRedirect
     """
-    schema, netloc, path, params, query, fragments = urlparse(request.path)
+    schema, netloc, _, params, query, fragments = urlparse(request.path)
     new_path = urlunparse((schema, netloc, redirect_path, params, query, fragments))
     # Re-use the domain and protocol used in the current request.
     # Redirects shouldn't change the domain, version or language.
@@ -168,6 +169,7 @@ def serve_docs(
         version_slug=None,
         filename='',
 ):
+    # pylint: disable-msg=too-many-locals
     """Map existing proj, lang, version, filename views to the file format."""
     final_project, lang_slug, version_slug, filename = _get_project_data_from_request(  # noqa
         request,

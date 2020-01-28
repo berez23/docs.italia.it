@@ -1404,96 +1404,83 @@ class DocsItaliaInternationalSlugTest(RequestFactoryTestMixin, TestCase):
     @pytest.mark.skipif(not IT_RESOLVER_IN_SETTINGS, reason='Require CLASS_OVERRIDES in settings')
     @pytest.mark.itresolver
     def test_international_url_serving(self):
-        with patch('readthedocs.core.views.serve._serve_symlink_docs') as serve_mock:
-            publisher = Publisher.objects.create(
-                name='Test Org',
-                slug='testorg',
-                metadata={},
-                projects_metadata={},
-                active=True
-            )
+        publisher = Publisher.objects.create(
+            name='Test Org',
+            slug='testorg',
+            metadata={},
+            projects_metadata={},
+            active=True
+        )
 
-            pub_project = PublisherProject.objects.create(
-                name='Test Project',
-                slug='testproject',
-                metadata={
-                    'documents': [
-                        'https://github.com/testorg/myrepourl',
-                        'https://github.com/testorg/anotherrepourl',
-                    ]
-                },
-                publisher=publisher,
-                active=True
-            )
+        pub_project = PublisherProject.objects.create(
+            name='Test Project',
+            slug='testproject',
+            metadata={
+                'documents': [
+                    'https://github.com/testorg/myrepourl',
+                    'https://github.com/testorg/anotherrepourl',
+                ]
+            },
+            publisher=publisher,
+            active=True
+        )
 
-            project = Project.objects.create(
-                name='my project',
-                slug='myprojectslug',
-                repo='https://github.com/testorg/myrepourl.git',
-                language='it'
-            )
-            pub_project.projects.add(project)
+        project = Project.objects.create(
+            name='my project',
+            slug='myprojectslug',
+            repo='https://github.com/testorg/myrepourl.git',
+            language='en'
+        )
+        pub_project.projects.add(project)
 
-            Version.objects.create(
-                uploaded=False,
-                built=True,
-                project=project,
-                active=True,
-                slug=STABLE
-            )
+        Version.objects.create(
+            uploaded=False,
+            built=True,
+            project=project,
+            active=True,
+            slug=STABLE
+        )
 
-            # try to get 'bozza' version with 'draft' slug for not italian language version
-            lang_slug = 'en'
-            version_slug = settings.RTD_LATEST_EN
-            request = self.request('/testorg/testproject/myprojectslug/en/%s/' % settings.RTD_LATEST_EN, user=self.user)
-            serve_docs(request, project=project, lang_slug=lang_slug, version_slug=version_slug)
+        # try to get 'bozza' version with 'draft' slug for not italian language version
+        lang_slug = 'en'
+        version_slug = settings.RTD_LATEST_EN
+        request = self.request('/testorg/testproject/myprojectslug/en/%s/' % settings.RTD_LATEST_EN, user=self.user)
+        response = serve_docs(request, project_slug=project.slug, lang_slug=lang_slug, version_slug=version_slug)
 
-            serve_mock.assert_called_with(
-                request,
-                filename='/testorg/testproject/myprojectslug/en/%s/' % LATEST,
-                privacy_level='public',
-                project=project
-            )
+        self.assertEqual(response['X-Accel-Redirect'], '/media/html/myprojectslug/%s/index.html' % LATEST)
 
-            # same version slug but with italian language should raise an exception
-            lang_slug = 'it'
-            with self.assertRaises(Http404):
-                serve_docs(request, project=project, lang_slug=lang_slug, version_slug=version_slug)
+        # same version slug but with italian language should raise an exception
+        lang_slug = 'it'
+        with self.assertRaises(Http404):
+            serve_docs(request, project_slug=project.slug, lang_slug=lang_slug, version_slug=version_slug)
 
-            # italian version slug
-            version_slug = LATEST
-            serve_docs(request, project=project, lang_slug=lang_slug, version_slug=version_slug)
-            serve_mock.assert_called_with(
-                request,
-                filename='/testorg/testproject/myprojectslug/it/%s/' % LATEST,
-                privacy_level='public',
-                project=project
-            )
+        # italian version slug
+        version_slug = LATEST
+        project.language = lang_slug
+        project.save()
+        response = serve_docs(request, project_slug=project.slug, lang_slug=lang_slug, version_slug=version_slug)
+        self.assertEqual(response['X-Accel-Redirect'], '/media/html/myprojectslug/%s/index.html' % LATEST)
 
-            # stable / stabile
-            lang_slug = 'en'
-            version_slug = 'stable'
-            request = self.request('/testorg/testproject/myprojectslug/en/stable/', user=self.user)
-            serve_docs(request, project=project, lang_slug=lang_slug, version_slug=version_slug)
+        # stable / stabile
+        lang_slug = 'en'
+        project.language = lang_slug
+        project.default_version = STABLE
+        project.save()
+        version_slug = 'stable'
+        request = self.request('/testorg/testproject/myprojectslug/en/stable/', user=self.user)
+        response = serve_docs(request, project_slug=project.slug, lang_slug=lang_slug, version_slug=version_slug)
 
-            serve_mock.assert_called_with(
-                request,
-                filename='/testorg/testproject/myprojectslug/en/stabile/',
-                privacy_level='public',
-                project=project
-            )
+        self.assertEqual(response['X-Accel-Redirect'], '/media/html/myprojectslug/%s/index.html' % STABLE)
 
-            # same version slug but with italian language should raise an exception
-            lang_slug = 'it'
-            with self.assertRaises(Http404):
-                serve_docs(request, project=project, lang_slug=lang_slug, version_slug=version_slug)
+        # same version slug but with italian language should raise an exception
+        lang_slug = 'it'
+        with self.assertRaises(Http404):
+            serve_docs(request, project_slug=project.slug, lang_slug=lang_slug, version_slug=version_slug)
 
-            # italian version slug
-            version_slug = STABLE
-            serve_docs(request, project=project, lang_slug=lang_slug, version_slug=version_slug)
-            serve_mock.assert_called_with(
-                request,
-                filename='/testorg/testproject/myprojectslug/it/%s/' % STABLE,
-                privacy_level='public',
-                project=project
-            )
+        # italian version slug
+        version_slug = STABLE
+        project.language = lang_slug
+        project.save()
+        response = serve_docs(request, project_slug=project.slug, lang_slug=lang_slug, version_slug=version_slug)
+
+        self.assertEqual(response['X-Accel-Redirect'], '/media/html/myprojectslug/%s/index.html' % STABLE)

@@ -1,2 +1,3 @@
 -r docsitalia-base.txt
+azure-storage-common==1.4.2
 -r lint.txt

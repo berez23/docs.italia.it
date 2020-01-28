@@ -32,6 +32,7 @@ class AzureStaticStorage(OverrideHostnameMixin, ManifestFilesMixin, AzureStorage
 
     """
     An Azure Storage backend for static media.
+
     * Uses Django's ManifestFilesMixin to have unique file paths (eg. core.a6f5e2c.css)
     """
 

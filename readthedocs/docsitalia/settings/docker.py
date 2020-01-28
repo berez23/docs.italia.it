@@ -307,7 +307,6 @@ class DocsItaliaDockerSettings(CommunityBaseSettings):
     AZURE_STATIC_STORAGE_HOSTNAME = 'local.docs.italia.it'
 
     # Storage for static files (those collected with `collectstatic`)
-    # STATICFILES_STORAGE = 'readthedocs.docsitalia.storage.azure_storage.PublicAzureStorage'
     STATICFILES_STORAGE = 'readthedocs.storage.azure_storage.AzureStaticStorage'
 
     STATICFILES_DIRS = [
