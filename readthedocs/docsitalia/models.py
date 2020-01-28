@@ -328,6 +328,16 @@ class AllowedTag(models.Model):
         self.name = self.name.strip().lower()
         return super(AllowedTag, self).clean()
 
+    @classmethod
+    def remove_unallowed(cls):
+        """Remove unallowed tags from existing projects."""
+        allowed = cls.objects.filter(enabled=True).values_list('name', flat=True)
+        for project in Project.objects.all():
+            for tag in project.tags.names():
+                if tag not in allowed:
+                    project.tags.remove(tag)
+            project.save()  # trigger a new search update
+
 
 class ProjectOrder(models.Model):
     project = models.OneToOneField(Project, verbose_name=_('Projects'), on_delete=models.CASCADE)
