@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 """
 Temporary mix of old `serve_docs` view and Proxito view from upstream to make azure storage work.
 
