@@ -84,15 +84,22 @@ def elastic_search(request, project_slug=None):
     :param project_slug: Sent when the view is a project search
     """
 
-    request_type = None
+    request_type = request.GET.get('type')
+
+    search_is_valid = True
+    if request_type and request_type not in ['file', 'project']:
+        search_is_valid = False
+
     if project_slug:
         queryset = Project.objects.protected(request.user)
         project_obj = get_object_or_404(queryset, slug=project_slug)
-        request_type = request.GET.get('type', 'file')
+        request_type = request_type or 'file'
+    else:
+        request_type = request_type or 'project'
 
     user_input = UserInput(
         query=request.GET.get('q'),
-        type=request_type or request.GET.get('type', 'project'),
+        type=request_type,
         project=project_slug or request.GET.get('project'),
         version=request.GET.get('version'),
         taxonomy=request.GET.get('taxonomy'),
@@ -127,7 +134,7 @@ def elastic_search(request, project_slug=None):
 
     sort_key = user_input.sort if user_input.sort in ALL_SORTS.keys() else DEFAULT_SORT_KEY
 
-    if user_input.query:
+    if user_input.query and search_is_valid:
         kwargs = {}
         kwargs['sort'] = ALL_SORTS[sort_key]['value']
 
