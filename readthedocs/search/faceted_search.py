@@ -91,7 +91,7 @@ class ProjectSearchBase(RTDFacetedSearch):
         'language': TermsFacet(field='language'),
         'publisher': TermsFacet(field='publisher'),
         'publisher_project': TermsFacet(field='publisher_project'),
-        'tags': NestedFacet('tags', TermsFacet(field='tags.name')),
+        'tags': NestedFacet('tags', TermsFacet(field='tags.slug')),
     }
     doc_types = [ProjectDocument]
     index = ProjectDocument._doc_type.index
@@ -109,7 +109,7 @@ class PageSearchBase(RTDFacetedSearch):
         ),
         'publisher': TermsFacet(field='publisher'),
         'publisher_project': TermsFacet(field='publisher_project'),
-        'tags': NestedFacet('tags', TermsFacet(field='tags.name')),
+        'tags': NestedFacet('tags', TermsFacet(field='tags.slug')),
         'is_default': TermsFacet(field='is_default'),
     }
     doc_types = [PageDocument]
