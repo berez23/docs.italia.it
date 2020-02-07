@@ -102,7 +102,7 @@ def elastic_search(request, project_slug=None):
         publisher=request.GET.get('publisher'),
         publisher_project=request.GET.getlist('publisher_project'),
         sort=request.GET.get('sort'),
-        tags=request.GET.getlist('tags'),
+        tags=list(map(lambda tag: tag.lower(), request.GET.getlist('tags'))),
         page=request.GET.get('page'),
         is_default=True if not request.GET.get('version') else None
     )
