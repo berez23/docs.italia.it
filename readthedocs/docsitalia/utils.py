@@ -10,6 +10,7 @@ import yaml
 from requests.exceptions import ConnectionError
 
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 from readthedocs.builds.constants import LATEST, STABLE
 from readthedocs.builds.models import Build
@@ -28,10 +29,8 @@ def load_yaml(txt):
         if hasattr(exc, 'problem_mark'):
             mark = exc.problem_mark
             note = ' (line %d, column %d)' % (mark.line + 1, mark.column + 1)
-        raise ValueError(
-            "The file could not be loaded, "
-            "possibly due to a syntax error%s" % (
-                note,))
+        message = "The file could not be loaded, possibly due to a syntax error%s" % note
+        raise ValueError(_(message))
 
 
 def get_subprojects(project_pk):

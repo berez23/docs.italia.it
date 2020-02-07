@@ -711,6 +711,12 @@ p.build-missing {
     color: #5a5;
 }
 
+.notification-docsitalia {
+    display: block;
+    padding: 1.5rem 1.5rem 1.5rem 1.5rem !important;
+    z-index: 1000;
+}
+
 /* warning banner */
 
 .banner {

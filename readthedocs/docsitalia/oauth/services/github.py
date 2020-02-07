@@ -37,6 +37,7 @@ class DocsItaliaGithubService(GitHubService):
         # organizations (namely: `italia`) this can yield a significant delay and unnecessary load.
         # Completely silencing the signals during this process it's the only option I have found.
         signal_processor.teardown()
+        invalid_metadata_errors = []
         try:
             orgs = self.paginate('https://api.github.com/user/orgs')
             for org in orgs:
@@ -59,6 +60,8 @@ class DocsItaliaGithubService(GitHubService):
                 except InvalidMetadata as e:
                     log.error(
                         'Syncing GitHub organizations: %s', e)
+                    # add errors
+                    invalid_metadata_errors.append(str(e))
                     continue
 
                 publisher.metadata = publisher_metadata
@@ -95,6 +98,8 @@ class DocsItaliaGithubService(GitHubService):
             raise Exception('Could not sync your GitHub organizations, '
                             'try reconnecting your account')
         signal_processor.setup()
+        if invalid_metadata_errors:
+            raise Exception(' / '.join(invalid_metadata_errors))
 
     def create_organization(self, fields):
         """

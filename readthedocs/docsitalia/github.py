@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 import requests
 from django.utils.encoding import force_text
+from django.utils.translation import ugettext_lazy as _
 
 from readthedocs.docsitalia.metadata import (
     SETTINGS_VALIDATORS, DOCUMENT_SETTINGS, InvalidMetadata
@@ -28,15 +29,15 @@ def get_metadata_from_url(url, session=None):
 def parse_metadata(data, org, model, settings):
     """parse metadata for a specific settings file."""
     if not data:
-        msg = 'no {} metadata for {}'.format(settings, model)
+        msg = _('no {} metadata for {}'.format(settings, model))
         raise InvalidMetadata(msg)
 
     validator = SETTINGS_VALIDATORS[settings]
     try:
         metadata = validator(org=org, settings=data, model=model)
     except ValueError as error:
-        msg = 'invalid {} metadata for {} - {}'.format(
-            settings, model, force_text(error))
+        msg = _('invalid {} metadata for {} - {}'.format(
+            settings, model, force_text(error)))
         raise InvalidMetadata(msg)
 
     return metadata
